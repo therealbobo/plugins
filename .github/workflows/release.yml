@@ -3,15 +3,13 @@ name: Release Plugins
 on:
   push:
     tags:
-      # semver
-      - '([a-z]+[a-z0-9-_\-]*)-[0-9]+.[0-9]+.[0-9]+'
-      - '([a-z]+[a-z0-9-_\-]*)-[0-9]+.[0-9]+.[0-9]+-[a-z]+'
-      - '([a-z]+[a-z0-9-_\-]*)-[0-9]+.[0-9]+.[0-9]+-[a-z]+[0-9]+'
+      # All tags
+      - '**'
 
-env:
-  AWS_S3_BUCKET: falco-distribution
-  AWS_S3_PREFIX: plugins
-  AWS_S3_REGION: eu-west-1
+# Checks if any concurrent jobs is running for release CI and eventually cancel it.
+concurrency:
+  group: ci-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   extract-info:
@@ -26,58 +24,40 @@ jobs:
         with:
           text: ${{ github.ref_name }}
           regex: '^([a-z]+[a-z0-9_\-]*)-(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?$'
-
-  release-plugins-stable-x86:
-    runs-on: ubuntu-latest
-    needs: extract-info
-    steps:
-      - name: Checkout Plugins ⤵️
-        uses: actions/checkout@v3
-
-      - name: Run x86 build 🏗️
-        run: make release/${{ needs.extract-info.outputs.package }}
-
-      - name: Configure AWS credentials 🔧⚙️
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: "arn:aws:iam::292999226676:role/github_actions-plugins-s3"
-          aws-region: ${{ env.AWS_S3_REGION }}
-
-      - name: Upload files to S3 ⬆️
-        run: |
-          for package in output/*.tar.gz; do
-            aws s3 cp --no-progress $package s3://${{ env.AWS_S3_BUCKET }}/${{ env.AWS_S3_PREFIX }}/stable/
-          done
-
-  release-plugins-stable-arm64:
-    runs-on: ubuntu-latest
-    needs: extract-info
-    steps:
-      - name: Checkout Plugins ⤵️
-        uses: actions/checkout@v3
-      
-      - name: Run arm64 build 🏗️
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: aarch64
-          distro: ubuntu_latest
-          githubToken: ${{ github.token }}
-
-          install: |
-            apt-get update && apt-get install -y --no-install-recommends build-essential git ca-certificates golang curl && apt-get clean
-            update-ca-certificates
-            git config --global --add safe.directory ${{ github.workspace }}
-            
-          run: make release/${{ needs.extract-info.outputs.package }}
           
-      - name: Configure AWS credentials 🔧⚙️
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: "arn:aws:iam::292999226676:role/github_actions-plugins-s3"
-          aws-region: ${{ env.AWS_S3_REGION }}
+      - name: Fail on non semver tag
+        if: steps.regex-match.outputs.match == ''
+        run: exit 1
 
-      - name: Upload files to S3 ⬆️
-        run: |
-          for package in output/*.tar.gz; do
-            aws s3 cp --no-progress $package s3://${{ env.AWS_S3_BUCKET }}/${{ env.AWS_S3_PREFIX }}/stable/
-          done
+  build-plugins:
+    needs: extract-info
+    uses: falcosecurity/plugins/.github/workflows/reusable_build_packages.yaml@master
+    with:
+      makecommand: make release/${{ needs.extract-info.outputs.package }}
+      suffix: stable
+    secrets: inherit
+
+  build-rules-tool:
+    needs: [extract-info]
+    uses: ./.github/workflows/reusable_build_rules_tool.yaml
+    with:
+      output: rules-checker
+      repository: falcosecurity/rules
+
+  validate-plugins:
+    needs: [extract-info, build-plugins, build-rules-tool]
+    uses: ./.github/workflows/reusable_validate_plugins.yaml
+    with:
+      plugin: ${{ needs.extract-info.outputs.package }}
+      falcoctl-version: 0.5.1
+      falco-image: falcosecurity/falco-no-driver:0.35.1
+      plugins-artifact: plugins-x86_64-stable.tar.gz
+      rules-checker: ./rules-checker
+      arch: x86_64
+
+  publish-plugins:
+    needs: [build-plugins, validate-plugins]
+    uses: falcosecurity/plugins/.github/workflows/reusable_publish_packages.yaml@master
+    with:
+      suffix: stable
+    secrets: inherit  

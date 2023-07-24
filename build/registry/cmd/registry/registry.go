@@ -17,21 +17,36 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/falcosecurity/plugins/build/registry/internal/options"
 	"github.com/falcosecurity/plugins/build/registry/pkg/check"
 	"github.com/falcosecurity/plugins/build/registry/pkg/distribution"
 	"github.com/falcosecurity/plugins/build/registry/pkg/oci"
 	"github.com/falcosecurity/plugins/build/registry/pkg/table"
-	"github.com/spf13/cobra"
-	"os"
 )
 
 const (
 	defaultTableSubTag = "<!-- REGISTRY -->"
 )
 
+var (
+	out = bufio.NewWriter(os.Stdout)
+)
+
 func main() {
+	defer out.Flush()
+
+	opts := options.NewCommonOptions(
+		options.WithContext(context.Background()),
+		options.WithOutput(out),
+	)
+
 	checkCmd := &cobra.Command{
 		Use:                   "check <filename>",
 		Short:                 "Verify the correctness of a plugin registry YAML file",
@@ -72,7 +87,12 @@ func main() {
 		Args:                  cobra.ExactArgs(1),
 		DisableFlagsInUseLine: true,
 		RunE: func(c *cobra.Command, args []string) error {
-			return oci.DoUpdateOCIRegistry(context.Background(), args[0])
+			status, err := oci.DoUpdateOCIRegistry(opts.Context, args[0])
+			if err != nil {
+				return err
+			}
+
+			return oci.PrintUpdateStatus(status, opts.Output)
 		},
 	}
 

@@ -1,7 +1,6 @@
 # Plugins
 
-![GitHub branch checks state](https://img.shields.io/github/checks-status/falcosecurity/plugins/master?style=for-the-badge)
-[![License](https://img.shields.io/github/license/falcosecurity/plugins?style=for-the-badge)](./LICENSE)
+[![Falco Core Repository](https://github.com/falcosecurity/evolution/blob/main/repos/badges/falco-core-blue.svg)](https://github.com/falcosecurity/evolution/blob/main/REPOSITORIES.md#core-scope) [![Stable](https://img.shields.io/badge/status-stable-brightgreen?style=for-the-badge)](https://github.com/falcosecurity/evolution/blob/main/REPOSITORIES.md#stable) [![License](https://img.shields.io/github/license/falcosecurity/rules?style=for-the-badge)](./LICENSE)
 
 Note: *The plugin system is a new feature introduced since Falco 0.31.0. You can find more detail in the original [proposal document](https://github.com/falcosecurity/falco/blob/master/proposals/20210501-plugin-system.md).*
 
@@ -73,6 +72,8 @@ These comments and the text between them should not be edited by hand -->
 | [github](https://github.com/falcosecurity/plugins/tree/master/plugins/github) | **Event Sourcing** <br/>ID: 8 <br/>`github` <br/>**Field Extraction** <br/> `github` | Github Webhook Events  <br/><br/> Authors: [The Falco Authors](https://falco.org/community) <br/> License: Apache-2.0 |
 | [k8saudit-eks](https://github.com/falcosecurity/plugins/tree/master/plugins/k8saudit-eks) | **Event Sourcing** <br/>ID: 9 <br/>`k8s_audit` <br/>**Field Extraction** <br/> `k8s_audit` | Read Kubernetes Audit Events from AWS EKS Clusters  <br/><br/> Authors: [The Falco Authors](https://falco.org/community) <br/> License: Apache-2.0 |
 | [nomad](https://github.com/albertollamaso/nomad-plugin/tree/main) | **Event Sourcing** <br/>ID: 10 <br/>`nomad` <br/>**Field Extraction** <br/> `nomad` | Read Hashicorp Nomad Events Stream  <br/><br/> Authors: [Alberto Llamas](https://github.com/albertollamaso/nomad-plugin/issues) <br/> License: Apache-2.0 |
+| [dnscollector](https://github.com/SysdigDan/dnscollector-falco-plugin) | **Event Sourcing** <br/>ID: 11 <br/>`dnscollector` <br/>**Field Extraction** <br/> `dnscollector` | DNS Collector Events  <br/><br/> Authors: [Daniel Moloney](https://github.com/SysdigDan/dnscollector-falco-plugin/issues) <br/> License: Apache-2.0 |
+| [gcpaudit](https://github.com/falcosecurity/plugins/tree/master/plugins/gcpaudit) | **Event Sourcing** <br/>ID: 12 <br/>`gcp_auditlog` <br/>**Field Extraction** <br/> `gcp_auditlog` | Read GCP Audit Logs  <br/><br/> Authors: [The Falco Authors](https://falco.org/community) <br/> License: Apache-2.0 |
 | test | **Event Sourcing** <br/>ID: 999 <br/>`test` | This ID is reserved for source plugin development. Any plugin author can use this ID, but authors can expect events from other developers with this ID. After development is complete, the author should request an actual ID  <br/><br/> Authors: N/A <br/> License: N/A |
 
 <!-- REGISTRY:TABLE -->
